@@ -1,0 +1,39 @@
+version: "3.8"
+services:
+  # ============================= Apache2/Php service ==============================
+  otp-php:
+    container_name: otp-php
+    image: php
+    build:
+      context: ./apache
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ../app:/var/app
+      - ./apache/settings/project.conf:/etc/apache2/sites-available/000-default.conf
+      - ./apache/settings/php.ini:/usr/local/etc/php/conf.d/php.ini
+    ports:
+      - ${SITE_PORT}:80
+
+  # ============================= MySQL service ==============================
+  otp-db:
+    image: mariadb:latest
+    container_name: otp-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - otp-db:/var/lib/mysql/data
+      - ./mysql/initial_scripts:/docker-entrypoint-initdb.d
+  # =========================== Phpmyadmin service ===========================
+  otp-pma:
+    image: phpmyadmin/phpmyadmin
+    container_name: otp-pma
+    ports:
+      - ${PMA_PORT}:80
+    links:
+      - otp-db:db
+volumes:
+  otp-db:
